@@ -39,6 +39,7 @@ int main() {
 			}
 		}
 	}
+	
 	for(int i = 0; i < n; i++) {
 		for(int j = 0; j < m; j++) {
 			if(i+3 < n) {
@@ -81,24 +82,33 @@ int main() {
 		}
 	}
 	
-	printf("Points: ");
+	printf("\nGenrated matrix: \n");
+	
+	for(int i = 0; i < n; i++) {
+		for(int j = 0; j < m; j++) {
+			printf("%d ", matrix[i][j]);
+		}
+		printf("\n");
+	}
+	
+	printf("\nPoints: ");
 	if(direction == 1) {
 		for(int i = 0; i <= 3; i++) {
-			printf("%d, %d; ", num[0], num[1]+i);	
+			printf("%d(%d, %d); ", matrix[num[0]-1][num[1]+i-1], num[0], num[1]+i);	
 		}
 	} else if(direction == 2) {
 		for(int i = 0; i <= 3; i++) {
-			printf("%d, %d; ", num[0]+i, num[1]);	
+			printf("%d(%d, %d); ", matrix[num[0]+i-1][num[1]-1], num[0]+i, num[1]);	
 	 	}
 	} else if(direction == 3) {
 		for(int i = 0; i <= 3; i++) {
-			printf("%d, %d; ", num[0]+i, num[1]+i);	
+			printf("%d(%d, %d); ", matrix[num[0]+i-1][num[1]+i-1], num[0]+i, num[1]+i);	
 	 	}
 	} else {
 		for(int i = 0; i <= 3; i++) {
-			printf("%d, %d; ", num[0]-i, num[1]-i);	
+			printf("%d(%d, %d); ", matrix[num[0]+i-1][num[1]+i-1], num[0]+i, num[1]+i);	
 	 	}
 	}
-	printf("\nMax multiplication: %d\n", max);
+	printf("\nLargest multiplication: %d\n", max);
 	return 0;
 }
