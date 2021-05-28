@@ -37,7 +37,6 @@ int main(int argc, char *argv[]) {
 	FILE *fp = NULL;
 	int user_input = 5; 
 	char filename[30] = "delivery_data.bin";
-	long buff = 0;
 	if(argc > 1) {
 		strcpy(filename, argv[1]);
 	}
@@ -48,12 +47,12 @@ int main(int argc, char *argv[]) {
 	}
 	
 	Node_t *new_node = malloc(sizeof(Node_t));
-	while((buff += fread(&(new_node->data.num), sizeof(long), 1, fp+buff)) == sizeof(long)) {
-		buff += fread(new_node->data.name, sizeof(char)*20, 1, fp+buff);
-		buff += fread(&(new_node->data.key), sizeof(int), 1, fp);
-		buff += fread(new_node->data.deliver, sizeof(char)*80, 1, fp+buff);
-		buff += fread(new_node->data.date, sizeof(char)*11, 1, fp+buff);
-		buff += fread(&(new_node->data.quantity), sizeof(int), 1, fp+buff);
+	while(fread(&(new_node->data.num), sizeof(long), 1, fp) == 1) {
+		fread(new_node->data.name, sizeof(char)*20, 1, fp);
+		fread(&(new_node->data.key), sizeof(int), 1, fp);
+		fread(new_node->data.deliver, sizeof(char)*80, 1, fp);
+		fread(new_node->data.date, sizeof(char)*11, 1, fp);
+		fread(&(new_node->data.quantity), sizeof(int), 1, fp);
 		if(head == NULL) {
 			new_node->next = NULL;
 			head = new_node;
@@ -63,7 +62,10 @@ int main(int argc, char *argv[]) {
 			new_node = malloc(sizeof(Node_t));
 		}
 	}
-	
+		
+	//printf("num:  %ld\n", head->data.num);
+	//printf("name: %s\n", head->data.name);	
+
 	while(user_input != 4) {
 		user_input = menu();
 		system("clear");
@@ -88,17 +90,13 @@ int main(int argc, char *argv[]) {
 	
 	system("clear");
 	Node_t *current = head;
-	printf("%ld\n", buff);
 	while(current != NULL) {
-		fwrite(&(current->data.num), sizeof(long), 1, fp+buff);
-		buff += sizeof(long);
-		printf("%ld\n", buff);
-		buff += fwrite(current->data.name, sizeof(char)*20, 1, fp+buff);
-		buff += sizeof(char)*20;
-		//buff += fwrite(&(current->data.key), sizeof(int), 1, fp+buff);
-		//buff += fwrite(current->data.deliver, sizeof(char)*80, 1, fp+buff);
-		//buff += fwrite(current->data.date, sizeof(char)*11, 1, fp+buff);
-		//buff += fwrite(&(current->data.quantity), sizeof(int), 1, fp+buff);
+		fwrite(&(current->data.num), sizeof(long), 1, fp);
+		fwrite(current->data.name, sizeof(char)*20, 1, fp);
+		fwrite(&(current->data.key), sizeof(int), 1, fp);
+		fwrite(current->data.deliver, sizeof(char)*80, 1, fp);
+		fwrite(current->data.date, sizeof(char)*11, 1, fp);
+		fwrite(&(current->data.quantity), sizeof(int), 1, fp);
 		current = current->next;
 	}
 	
