@@ -4,15 +4,15 @@
 #include "getch.c"
 
 typedef enum {
-	HIDDEN,
+	HIDDEN = 1,
 	READ_ONLY,
 	SYSTEM_FILE,
 	EXECUTABLE,
 } File_flag_e;
 
 typedef struct {
-	char *name;
-	char *path;
+	char name[100];
+	char path[500];
 	int size;
 	int creation_date[3];
 	int last_modified_date[3];
@@ -20,15 +20,18 @@ typedef struct {
 } File_t;
 
 struct Node_t{
-	File_t *data;
+	File_t data;
 	struct Node_t *next;
 };
 typedef struct Node_t Node_t;   
 
 int menu(void);
 void print_menu(char menu_list[4][20], int user);
-void add_file(FILE *fp);
-void enter_string(char *string);
+void add_file(FILE *fp, Node_t *head);
+void find_file(FILE *fp, Node_t *head);
+void print_dir(FILE *fp, Node_t *head);
+void print_flag(File_flag_e flag);
+int folder_in_dir(char* dir, File_t file);
 
 int main(int argc, char *argv[]) {
 	int user_input = 10;
@@ -93,28 +96,105 @@ void print_menu(char menu_list[4][20], int user) {
 	}
 }
 
-void add_file(FILE *fp) {
-	
+void add_file(FILE *fp, Node_t *head) {
+	Node_t *new = malloc(sizeof(Node_t));
+	printf("Enter file's name:");
+	scanf("%s", new->data.name);
+	printf("Enter file's path:");
+	scanf("%s", new->data.path);
+	printf("Enter file's size:");
+	scanf("%d", &(new->data.size));
+	printf("Enter file's creation date:");
+	scanf("%d %d %d", new->data.creation_date, new->data.creation_date+1, new->data.creation_date+2);
+	printf("Enter file's last modified date:");
+	scanf("%d %d %d", new->data.last_modified_date, new->data.last_modified_date+1, new->data.last_modified_date+2);
+	int flag;
+	printf("Enter file's flag(1-hidden, 2-read-only, 3-system file, 4-executable):"); 
+	scanf("%d", &flag);
+	new->data.flag = flag;
+	new->next = NULL;
+	if(head == NULL) {
+		head = new;
+	} else {
+		Node_t *cur = head;
+		while(cur->next != NULL) {
+			cur = cur->next;
+		}
+		cur->next = new;
+	}
 }
 
-void enter_string(char *string) {
-	char user_input;
-	int str_size = 1;
-	while(user_input != '\n') {
-		user_input = getch();
-		if(user_input == 127) {
-			if(str_size > 1) {
-				str_size--;
-				string = realloc(string, sizeof(char) * str_size);
-				printf("\b \b");
-			}
-		} else {
-			str_size++;
-			string = realloc(string, sizeof(char) * str_size);
-			*(string+str_size-2) = user_input;
-			printf("%c", user_input);
+void find_file(FILE *fp, Node_t *head) {
+	char file[501];
+	printf("Enter file's name");
+	scanf("%s", file);
+	
+	Node_t *cur = head;
+	Node_t *found = NULL;
+	do{
+		if(!strcmp(file, strcat(cur->data.path, strcat("/", cur->data.name)))) {
+			found = cur;
+			break;
 		}
+	}while(cur->next != NULL);
+	
+	if(found == NULL) {
+		printf("File not found");
+	} else {
+		printf("Name: %s\n", found->data.name);
+		printf("Path: %s\n", found->data.path);
+		printf("Size: %d\n", found->data.size);
+		printf("Creation date: %d.%d.%d\n", found->data.creation_date[0], found->data.creation_date[1], found->data.creation_date[2]);
+		printf("Last modified date: %d.%d.%d\n", found->data.last_modified_date[0], found->data.last_modified_date[1], found->data.last_modified_date[2]);
+		print_flag(found->data.flag);
 	}
-	*(string+str_size-1) = 0;
-	printf("%s", string);
 }
+
+void print_flag(File_flag_e flag) {
+	switch(flag) {
+		case '1':
+			printf("Flag: hidden\n");
+			break;
+		case '2':
+			printf("Flag: read-only\n");
+			break;
+		case '3':
+			printf("Flag: system file\n");
+			break;
+		case '4':
+			printf("Flag: executable\n");
+			break;
+	}
+}
+
+void print_dir(FILE *fp, Node_t *head) {
+	char dir[400];
+	printf("Enter folders's name");
+	scanf("%s", dir);
+	
+	int files = 0;
+	int size = 0;
+	
+	Node_t *cur = head;
+	do{
+		if(!strcmp(cur->data.path, dir)) {
+			files++;
+			size += cur->data.size;
+		} else {
+			size += folder_in_dir(dir, cur->data);
+		}
+	}while(cur->next != NULL);
+	
+	printf("Files: %d", files);
+	printf("Size: %fGB", (float)size/1024);
+}
+
+int folder_in_dir(char* dir, File_t file) {
+	if(strstr(file.path, dir)) {
+		return file.size;
+	} else {
+		return 0;
+	}
+}
+
+

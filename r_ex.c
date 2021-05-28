@@ -14,11 +14,19 @@ void searchFlower(Flower *f, int f_size, char *counrty);
 void saveData(Flower *f, int f_size);
 
 int main() {
-	Flower f;
-	Flower *f_pt;
-	f_pt = &f;
-	inputFlower(f_pt);
-	outputFlower(f);
+	Flower *arrayOfFlowers;
+	int aof_size;
+	scanf("%d", &aof_size);
+	arrayOfFlowers = malloc(sizeof(Flower)*aof_size);
+	for(int i = 0; i < aof_size; i++) {
+		inputFlower(arrayOfFlowers+i);
+	}
+	for(int i = 0; i < aof_size; i++) {
+		outputFlower(*(arrayOfFlowers+i));
+	}
+	searchFlower(arrayOfFlowers, aof_size, "aaa");
+	saveData(arrayOfFlowers, aof_size);
+	free(arrayOfFlowers);
 	return 0;
 }
 
@@ -51,12 +59,13 @@ void saveData(Flower *f, int f_size) {
 	for(int i = 0; i < f_size; i++) {
 		str_size = sizeof((f+i)->name);
 		fwrite(&str_size, sizeof(int), 1, fp);
-		fwrite((f+i)->name, sizeof((f+i)->name), 1, fp);
+		fwrite((f+++i)->name, sizeof((f+i)->name), 1, fp);
 		fwrite(&((f+i)->price), sizeof(int), 1, fp);
 		str_size = sizeof((f+i)->country);
 		fwrite(&str_size, sizeof(int), 1, fp);
 		fwrite((f+i)->country, sizeof((f+i)->country), 1, fp);
 	}
+	fclose(fp);
 }
 
 
