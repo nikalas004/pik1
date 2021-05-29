@@ -28,43 +28,30 @@ void enter_date(char *date);
 void deliveries_by_moth(Node_t *head);
 void int_to_char(int month, char *month_c);
 void print_delivery(Delivery_t delivery);
-void stcock_total_quantity(Node_t *head);
+void stock_total_quantity(Node_t *head);
 void all_deliver_info_for_stock(Node_t *head);
 void year_to_string(int year, char *year_c);
 
-int main(int argc, char *argv[]) {
+int main() {
 	Node_t *head = NULL;
 	FILE *fp = NULL;
 	int user_input = 5; 
-	char filename[30] = "delivery_data.bin";
-	if(argc > 1) {
-		strcpy(filename, argv[1]);
-	}
 	
-	if(!(fp = fopen(filename, "ab+"))) {
-		perror("Error opening file!");
-		exit(-1);
-	}
+	fp = fopen("deliverys.bin", "ab+");
 	
 	Node_t *new_node = malloc(sizeof(Node_t));
-	while(fread(&(new_node->data.num), sizeof(long), 1, fp) == 1) {
+	while(fread(&(new_node->data.num), sizeof(long), 1, fp)) {
 		fread(new_node->data.name, sizeof(char)*20, 1, fp);
 		fread(&(new_node->data.key), sizeof(int), 1, fp);
 		fread(new_node->data.deliver, sizeof(char)*80, 1, fp);
 		fread(new_node->data.date, sizeof(char)*11, 1, fp);
 		fread(&(new_node->data.quantity), sizeof(int), 1, fp);
-		if(head == NULL) {
-			new_node->next = NULL;
-			head = new_node;
-		} else {
-			new_node->next = head;
-			head = new_node;
-			new_node = malloc(sizeof(Node_t));
-		}
-	}
 		
-	//printf("num:  %ld\n", head->data.num);
-	//printf("name: %s\n", head->data.name);	
+		new_node->next = head;
+		head = new_node;
+		new_node = malloc(sizeof(Node_t));
+	}
+	fclose(fp);	
 
 	while(user_input != 4) {
 		user_input = menu();
@@ -77,7 +64,7 @@ int main(int argc, char *argv[]) {
 				deliveries_by_moth(head);
 				break;
 			case 2:
-				stcock_total_quantity(head);
+				stock_total_quantity(head);
 				break;
 			case 3:
 				all_deliver_info_for_stock(head);
@@ -90,6 +77,7 @@ int main(int argc, char *argv[]) {
 	
 	system("clear");
 	Node_t *current = head;
+	fp = fopen("deliverys.bin", "wb");
 	while(current != NULL) {
 		fwrite(&(current->data.num), sizeof(long), 1, fp);
 		fwrite(current->data.name, sizeof(char)*20, 1, fp);
@@ -99,14 +87,13 @@ int main(int argc, char *argv[]) {
 		fwrite(&(current->data.quantity), sizeof(int), 1, fp);
 		current = current->next;
 	}
-	
+	fclose(fp);
 	current = head;
 	while(current != NULL) {
 		Node_t *for_free = current->next;
 		free(current);
 		current = for_free;
 	}
-	fclose(fp);
 	
 	printf("End of program\n");
 	
@@ -167,16 +154,9 @@ void add_delivery(Node_t **head) {
 	printf("Enter delivered quantity: ");
 	scanf("%d", &(new_node->data.quantity));
 	getch();
-	if(*head == NULL) {
-		*head = new_node;
-		return;
-	}
-	Node_t *current = *head;
-	while(current->next != NULL) {
-		current = current->next;
-	}
 	
-	current->next = new_node;
+	new_node->next = *head;
+	*head = new_node;
 }
 
 long enter_delivery_number(Node_t **head) {
@@ -197,7 +177,7 @@ long enter_delivery_number(Node_t **head) {
 			}
 			current = current->next;
 		}
-		if(digits_check(del_num) != 4) {
+		if(digits_check(del_num) != 12) {
 			printf("The delivery nuber has to contain 12 digits!\n");
 		} else {
 			dig_flag = 0;
@@ -276,11 +256,11 @@ void deliveries_by_moth(Node_t *head) {
 	month_c[2] = 0;
 	Node_t *current = head;
 	char buffer[10];
+	strcat(month_c, "-");
+	strcat(month_c, year_c);
 	while(current != NULL) {
 		strncpy(buffer, current->data.date+3, 7);
 		buffer[7] = 0;
-		strcat(month_c, "-");
-		strcat(month_c, year_c);
 		if(!strcmp(month_c, buffer)) { 
 			print_delivery(current->data);
 		}
@@ -391,7 +371,7 @@ void print_delivery(Delivery_t delivery) {
 	printf("----------------------------------\n");
 }
 
-void stcock_total_quantity(Node_t *head) {
+void stock_total_quantity(Node_t *head) {
 	char stock[20];
 	int quantity = 0;
 	printf("Enter name of stock: ");
