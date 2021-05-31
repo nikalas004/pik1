@@ -26,7 +26,7 @@ struct Node_t{
 typedef struct Node_t Node_t;   
 
 int menu(void);
-void print_menu(char menu_list[4][20], int user);
+void print_menu(char menu_list[5][20], int user);
 void add_file(Node_t **head);
 void show_file(Node_t **head);
 void print_file(File_t file);
@@ -34,13 +34,13 @@ void show_dir(Node_t **head);
 void read_data(Node_t **head, char filename[100]);
 void save_data(Node_t **head, char filename[100]);
 void garbage_collector(Node_t **head);
-int compare_dirs(char **user_dir, char **file_dir);
+void show_all(Node_t **head);
 
 int main(int argc, char *argv[]) {
 	int user_input = 10;
 	Node_t *head = NULL;
 	char filename[100] = "files_db.bin";
-	void (*func_p[3])(Node_t **head) = {add_file, show_file, show_dir};
+	void (*func_p[4])(Node_t **head) = {add_file, show_file, show_dir, show_all};
 	int files = 0;
 	
 	if(argc > 1) {
@@ -49,10 +49,10 @@ int main(int argc, char *argv[]) {
 	
 	read_data(&head, filename);
 	
-	while(user_input != 3) {
+	while(user_input != 4) {
 		user_input = menu();
 		system("clear");
-		if(user_input != 3) {
+		if(user_input != 4) {
 			func_p[user_input](&head);
 			printf("Please press any key...");
 			getch();
@@ -80,6 +80,7 @@ void read_data(Node_t **head, char filename[100]) {
 		fread(&(new_node->data.size), sizeof(int), 1, fp);
 		fread(new_node->data.creation_date, sizeof(int)*3, 1, fp);
 		fread(new_node->data.last_modified_date, sizeof(int)*3, 1, fp);
+		fread(&(new_node->data.flag), sizeof(File_flag_e), 1, fp);
 		
 		new_node->next = *head;
 		*head = new_node;
@@ -102,6 +103,7 @@ void save_data(Node_t **head, char filename[100]) {
 		fwrite(&(current->data.size), sizeof(int), 1, fp);
 		fwrite(current->data.creation_date, sizeof(int)*3, 1, fp);
 		fwrite(current->data.last_modified_date, sizeof(int)*3, 1, fp);
+		fwrite(&(current->data.flag), sizeof(File_flag_e), 1, fp);
 		files_count++;
 		
 		current = current->next;
@@ -124,7 +126,7 @@ void garbage_collector(Node_t **head) {
 }
 
 int menu(void) {
-	char menu_options[4][20] = {"1.Add file\n", "2.Find file\n", "3.Show Folder\n", "4.Exit\n"};
+	char menu_options[5][20] = {"1. Add file\n", "2. Find file\n", "3. Show Folder\n", "4. Show All\n", "5. Exit\n"};
 	int user = 0;
 	char user_input = 0;
 	while(1) {
@@ -136,12 +138,12 @@ int menu(void) {
 				case 'A':
 					user--;
 					if(user < 0) {
-						user = 3;
+						user = 4;
 					}
 					break;
 				case 'B':
 					user++;
-					if(user == 4) {
+					if(user == 5) {
 						user = 0;
 					}
 					break;
@@ -152,13 +154,21 @@ int menu(void) {
 	}
 }
 
-void print_menu(char menu_list[4][20], int user) {
+void print_menu(char menu_list[5][20], int user) {
 	system("clear");
-	for(int i = 0; i < 4; i++) {
+	for(int i = 0; i < 5; i++) {
 		if(i == user) {
 			printf("> ");
 		}
 		printf("%s", menu_list[i]);
+	}
+}
+
+void show_all(Node_t **head) {
+	Node_t *current = *head;
+	while(current != NULL) {
+		print_file(current->data);
+		current = current->next;
 	}
 }
 
@@ -184,6 +194,9 @@ void add_file(Node_t **head) {
 	
 	printf("Enter file's last modified date: ");
 	scanf("%d %d %d", new_node->data.last_modified_date, new_node->data.last_modified_date+1, new_node->data.last_modified_date+2);
+	
+	printf("Enter file's flag: ");
+	scanf("%d", &(new_node->data.flag));
 	
 	getc(stdin);
 	
@@ -241,6 +254,7 @@ void print_file(File_t file) {
 	printf("Size: %dMB\n", file.size);
 	printf("Creation date: %d/%d/%d\n", file.creation_date[0], file.creation_date[1], file.creation_date[2]);
 	printf("Last modified date: %d/%d/%d\n", file.last_modified_date[0], file.last_modified_date[1], file.last_modified_date[2]);
+	printf("Flag: %d\n", file.flag);
 	printf("------------------------------\n");	
 }
 
@@ -251,15 +265,13 @@ void show_dir(Node_t **head) {
 	long folder_size = 0;
 	char *new_line_pt;
 	
-	printf("Enter dirctory: ");
+	printf("Enter directory: ");
 	fgets(path, 500, stdin);
 	new_line_pt = strchr(path, '\n');
 	*new_line_pt = 0;
 	
 	while(current != NULL) {
-		char *path_sp = strtok(current->data.path, "/");
-		char *dir_sp = strtok(path, "/");
-		if(compare_dirs(&dir_sp, &path_sp)) {
+		if(strstr(current->data.path, path)) {
 			files_in_folder++;
 			folder_size += current->data.size;
 		}
@@ -268,15 +280,4 @@ void show_dir(Node_t **head) {
 	
 	printf("Files in directory: %d\n", files_in_folder);
 	printf("Directory size: %ld\n", folder_size);
-}
-
-int compare_dirs(char **user_dir, char **file_dir) {
-	while(*user_dir != NULL) {
-		if(strcmp(*user_dir, *file_dir)) {
-			return 0;
-		}
-		*user_dir = strtok(NULL, "/");
-		*file_dir = strtok(NULL, "/");
-	}
-	return 1;
 }
